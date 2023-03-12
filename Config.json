@@ -8,8 +8,8 @@
     "mysql_host" : "127.0.0.1",
     "mysql_user" : "root",
     "mysql_pass" : "",
-    "mysql_db" : "python_scrap",
-    "mysql_tb" : "vehicleprice",
-    "scroll_count" : 3,
+    "mysql_db" : "python_test",
+    "mysql_tb" : "vehicleprice2",
+    "scroll_count" : 10,
     "debug":true
 }

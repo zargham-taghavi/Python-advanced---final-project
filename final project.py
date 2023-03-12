@@ -191,22 +191,16 @@ def save_to_database():
     else:  # else will run if try part execute successfully.
         mycursor = SQL_connection.cursor()
         try:
-            mycursor.execute(f"CREATE DATABASE {my_db} DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci;")
+            mycursor.execute(f"CREATE DATABASE IF NOT EXISTS {my_db} DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci;")
         except mysql.connector.Error as err:
-            if err.errno == errorcode.ER_DB_CREATE_EXISTS:
-                print("error on create database: ", err)
-            else:
-                print(err)
-        finally:
+            print("error on create database: ", err)
+        else:
             try:
                 mycursor.execute(f"USE {my_db}")
                 mycursor.execute(
-                    f"CREATE TABLE {my_tb} (name VARCHAR(255), detail VARCHAR(255), model smallint(6), mileage mediumint(9), price bigint(20), date date) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci;")
+                    f"CREATE TABLE IF NOT EXISTS {my_tb} (name VARCHAR(255), detail VARCHAR(255), model smallint(6), mileage mediumint(9), price bigint(20), date date) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci;")
             except mysql.connector.Error as err:
-                if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                    print("error on create table: ", err)
-                else:
-                    print(err)
+                print("error on create table: ", err)
 
     for car in all_cars_list:
         query = f"INSERT INTO {my_tb} VALUES (\'{car['name']}\', \'{car['detail']}\', {car['model']}, {car['mileage']}, {car['price']}, \'{datetime.today().date()}\')"
