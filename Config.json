@@ -1,14 +1,12 @@
 {
-    "car_name": "python developer",  
-    "car_model":1398,  
-    "browser_hide": false,
-    "time_out":20,
-    "sleep_time":1,
     "mysql_host" : "127.0.0.1",
     "mysql_user" : "root",
     "mysql_pass" : "",
     "mysql_db" : "python_test",
     "mysql_tb" : "vehicleprice2",
-    "scroll_count" : 5,
-    "debug": true
+    "scroll_count" : 20,
+    "browser_hide": false,
+    "time_out":20,
+    "sleep_time":1,
+    "debug": false
 }
