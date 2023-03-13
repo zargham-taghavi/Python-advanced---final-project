@@ -19,6 +19,8 @@ elif __file__:
 with open(root_path/'Config.json', encoding='utf-8') as json_file:
     Config = json.load(json_file)
 
+car_name = Config["car_name"]
+car_model = Config["car_model"]
 my_host = Config["mysql_host"]
 my_user = Config["mysql_user"]
 my_pass = Config["mysql_pass"]
@@ -43,6 +45,7 @@ def format_html_result():
     browser_driver = webdriver.Chrome(chrome_options=options)
     # browser_driver = webdriver.Chrome("C:/Users/zargham/.cache/selenium/chromedriver/win32/109.0.5414.74/chromedriver.exe")
 
+    # browser_driver.get("https://divar.ir/s/tehran/car?non-negotiable=true")
     browser_driver.get("https://bama.ir/car?mileage=1&priced=1")
 
     screen_height = browser_driver.execute_script(
@@ -56,16 +59,38 @@ def format_html_result():
         browser_driver.execute_script(
             "window.scrollTo(0, {screen_height}*{i});".format(screen_height=screen_height, i=i+1))
         time.sleep(sleep_time)
+        # WebDriverWait(browser_driver, request_time_out_seconds).until(EC.visibility_of_all_elements_located(
+        #     (By.CLASS_NAME, 'bama-ad-holder')))   # for 'Divar.ir' website   post-card-item-af972
         WebDriverWait(browser_driver, request_time_out_seconds).until(EC.visibility_of_element_located(
-            (By.CLASS_NAME, 'bama-ad-holder')))  
+            (By.CLASS_NAME, 'bama-ad-holder')))   # for 'Divar.ir' website   post-card-item-af972
     try:
+        # for 'Divar.ir' website  post-list-grid-eef81
         elements = browser_driver.find_element(
             By.CLASS_NAME, 'bama-adlist-container')
+        # for 'Divar.ir' website   post-card-item-af972
         all_result = elements.find_elements(By.CLASS_NAME, 'bama-ad-holder')
         time.sleep(sleep_time)
     except errorcode:
         if debug:
             print(errorcode)
+
+
+# method 2, in each scroll find elements, and extend it to final result
+
+    # for i in range(scroll_count):
+    #     # scroll one screen height each time
+    #     browser_driver.execute_script(
+    #         "window.scrollTo(0, {screen_height}*{i});".format(screen_height=screen_height, i=i+1))
+    #     try:
+    #         elements = WebDriverWait(browser_driver, 20).until(EC.visibility_of_all_elements_located(
+    #             (By.CLASS_NAME, 'bama-ad-holder')))  # for 'Divar.ir' website    post-card-item-af972
+    #     #     print(len(elements))
+    #     #     print('elements[0].text: ',elements[0].text)
+    #         all_result.extend(elements)
+    #         time.sleep(sleep_time)
+    #     except errorcode:
+    #         if debug:
+    #             print(errorcode)
 
     print('------------ len(all_result) -----------', len(all_result))
     faile_with_price = 0
@@ -74,6 +99,10 @@ def format_html_result():
         try:
             car_dict = {}
             car_dict['right format'] = True
+            # for divar.ir website
+            # post['title'] = element.find_element(By.CLASS_NAME,'kt-post-card__title')
+            # post['description'] = element.find_elements(By.CLASS_NAME,'kt-post-card__description')
+            # post['bottom'] = element.find_element(By.CLASS_NAME,'kt-post-card__bottom-description')
 
             # for bama.ir website
             # if debug:
@@ -186,10 +215,47 @@ def read_from_database():
     else:  # else will run if try part execute successfully.
         cursor = cnx.cursor()
 
+    # query = f"SELECT DISTINCT name, detail, model, mileage, price, date FROM {my_tb}"
     query = f"SELECT * FROM {my_tb}"
     cursor.execute(query)
+    all_cars = []
+    x = []
+    y = []
     for name, detail, model, mileage, price, date in cursor:
-        print(f"the car {name +' - '+detail} model {model},  with {mileage} mileage is {price} Toman on Date: {date}")
+        new_car = {}
+        new_car_input = []
+        # print(f"{i}: the car {name +' - '+detail} model {model} +  with {mileage} mileage is {price} Toman on Date: {date}")
+        new_car['name'] = name
+        new_car['detail'] = detail
+        new_car['model'] = model
+        new_car['mileage'] = mileage
+        new_car['price'] = price
+        # new_car['date']=date
+        if debug:
+            print(new_car)
+        all_cars.append(new_car)
+        new_car_input = [name, detail, model, mileage]
+        x.append(new_car_input)
+        y.append(price)
+    import numpy as np
+    import pandas as pd
+    from sklearn import tree
+    from sklearn.linear_model import LinearRegression
+    all_cars_df = pd.DataFrame(all_cars)
+    # all_cars_df.rename(index=all_cars_df.name, inplace=True)
+    print(all_cars_df)
+    print(all_cars_df.describe())
+    # print(x)
+    # print(y)
+    clf = tree.DecisionTreeClassifier()
+    reg = LinearRegression()
+    reg.fit(x,y)
+    clf = clf.fit(x,y)
+    new_data = ['پژو 206','تیپ 5',1395,85000]
+    answer = reg.predict(new_data)
+    print(f'i predict that price is {answer} toman')
 
-format_html_result()
-# read_from_database()
+
+# format_html_result()
+# save_to_database()
+read_from_database()
