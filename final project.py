@@ -82,7 +82,9 @@ def format_html_result():
         browser_driver.execute_script(
             "window.scrollTo(0, {screen_height}*{i});".format(screen_height=screen_height, i=i+1))
         time.sleep(sleep_time)
-        WebDriverWait(browser_driver, request_time_out_seconds).until(EC.visibility_of_all_elements_located(
+        # WebDriverWait(browser_driver, request_time_out_seconds).until(EC.visibility_of_all_elements_located(
+        #     (By.CLASS_NAME, 'bama-ad-holder')))   # for 'Divar.ir' website   post-card-item-af972
+        WebDriverWait(browser_driver, request_time_out_seconds).until(EC.visibility_of_element_located(
             (By.CLASS_NAME, 'bama-ad-holder')))   # for 'Divar.ir' website   post-card-item-af972
     try:
         # for 'Divar.ir' website  post-list-grid-eef81
@@ -198,20 +200,26 @@ def save_to_database():
             try:
                 mycursor.execute(f"USE {my_db}")
                 mycursor.execute(
-                    f"CREATE TABLE IF NOT EXISTS {my_tb} (name VARCHAR(255), detail VARCHAR(255), model smallint(6), mileage mediumint(9), price bigint(20), date date) ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci;")
+                    f"CREATE TABLE IF NOT EXISTS {my_tb} "+
+                    "(name VARCHAR(255), detail VARCHAR(255), model smallint(6), "+
+                    "mileage mediumint(9), price bigint(20), date date, "+
+                    "CONSTRAINT unique_index UNIQUE(name, detail, model, mileage, price)) "+
+                    "ENGINE=InnoDB DEFAULT CHARSET=utf8 DEFAULT COLLATE utf8_general_ci")
             except mysql.connector.Error as err:
                 print("error on create table: ", err)
-
+    duplicated_result = 0
     for car in all_cars_list:
-        query = f"INSERT INTO {my_tb} VALUES (\'{car['name']}\', \'{car['detail']}\', {car['model']}, {car['mileage']}, {car['price']}, \'{datetime.today().date()}\')"
+        query = f"INSERT INTO {my_tb} VALUES ('{car['name']}', '{car['detail']}', {car['model']}, {car['mileage']}, {car['price']}, '{datetime.today().date()}')"
         # print(query)
         try:
             mycursor.execute(query)
             SQL_connection.commit()
         except Exception as err:
+            if err.errno == errorcode.ER_DUP_ENTRY:
+                duplicated_result += 1
             if debug:
                 print(err)
-    print('your search has saved to database!')
+    print(f'your search has saved to database! there was {len(all_cars_list)} result. and {len(all_cars_list)-duplicated_result} of them was new itmes')
 
 
 def read_from_database():
@@ -230,8 +238,8 @@ def read_from_database():
     else:  # else will run if try part execute successfully.
         cursor = cnx.cursor()
 
-    # query = f"SELECT * FROM {my_tb}"
-    query = f"SELECT DISTINCT name, detail, model, mileage, price, date FROM {my_tb}"
+    # query = f"SELECT DISTINCT name, detail, model, mileage, price, date FROM {my_tb}"
+    query = f"SELECT * FROM {my_tb}"
     cursor.execute(query)
 
     i = 1
