@@ -2,7 +2,6 @@
     "car_name": "python developer",  
     "car_model":1398,  
     "browser_hide": false,
-    "browser_title_to_hide":"zargham09355124619",
     "time_out":20,
     "sleep_time":1,
     "mysql_host" : "127.0.0.1",
@@ -10,6 +9,6 @@
     "mysql_pass" : "",
     "mysql_db" : "python_test",
     "mysql_tb" : "vehicleprice2",
-    "scroll_count" : 10,
-    "debug":true
+    "scroll_count" : 5,
+    "debug": true
 }

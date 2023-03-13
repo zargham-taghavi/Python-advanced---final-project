@@ -10,7 +10,6 @@ from selenium.webdriver.common.by import By
 import sys
 from pathlib import Path
 import json
-import win32gui
 
 if getattr(sys, 'frozen', False):
     root_path = Path(sys.executable).parent
@@ -27,49 +26,27 @@ my_user = Config["mysql_user"]
 my_pass = Config["mysql_pass"]
 my_db = Config["mysql_db"]
 my_tb = Config["mysql_tb"]
-# must have 6 column, first and second text, and next 3 are int and last one Date
-# (name, detial, model, mileage, price, date)
 browser_hide = Config["browser_hide"]
 debug = Config["debug"]
 scroll_count = Config["scroll_count"]
 sleep_time = Config["sleep_time"]  # You can set your own pause time by sec.
 request_time_out_seconds = Config["time_out"]
-browser_title_to_hide = Config["browser_title_to_hide"]
 
 all_cars_list = []
-
-myWindows = []
-
-
-def enumWindowFunc(hwnd, windowList):
-    """ win32gui.EnumWindows() callback """
-    text = win32gui.GetWindowText(hwnd)
-    # className = win32gui.GetClassName(hwnd)
-    if text.find(browser_title_to_hide) != -1:
-        windowList.append(hwnd)
-
 
 def format_html_result():
     options = webdriver.ChromeOptions()
     options.add_argument('--ignore-certificate-errors')
     options.add_argument('--ignore-ssl-errors')
     options.add_argument('--start-maximized')
+    if browser_hide:
+        options.add_argument("--headless")
+
     browser_driver = webdriver.Chrome(chrome_options=options)
     # browser_driver = webdriver.Chrome("C:/Users/zargham/.cache/selenium/chromedriver/win32/109.0.5414.74/chromedriver.exe")
 
     # browser_driver.get("https://divar.ir/s/tehran/car?non-negotiable=true")
     browser_driver.get("https://bama.ir/car?mileage=1&priced=1")
-
-    # Hide Browser
-    if browser_hide:
-        if debug:
-            print("--- lets change title so we can find it later.")
-        browser_driver.execute_script(
-            'document.title = "%s"' % browser_title_to_hide)
-        time.sleep(sleep_time)
-        win32gui.EnumWindows(enumWindowFunc, myWindows)
-        for hwnd in myWindows:
-            win32gui.ShowWindow(hwnd, False)
 
     screen_height = browser_driver.execute_script(
         "return window.screen.height;")   # get the screen height of the web
@@ -241,8 +218,6 @@ def read_from_database():
     # query = f"SELECT DISTINCT name, detail, model, mileage, price, date FROM {my_tb}"
     query = f"SELECT * FROM {my_tb}"
     cursor.execute(query)
-
-    i = 1
     all_cars = []
     x = []
     y = []
@@ -256,31 +231,31 @@ def read_from_database():
         new_car['mileage'] = mileage
         new_car['price'] = price
         # new_car['date']=date
-        # print(new_car)
+        if debug:
+            print(new_car)
         all_cars.append(new_car)
         new_car_input = [name, detail, model, mileage]
         x.append(new_car_input)
         y.append(price)
-        i += 1
     import numpy as np
     import pandas as pd
     from sklearn import tree
     from sklearn.linear_model import LinearRegression
     all_cars_df = pd.DataFrame(all_cars)
-    all_cars_df.rename(index=all_cars_df.name, inplace=True)
+    # all_cars_df.rename(index=all_cars_df.name, inplace=True)
     print(all_cars_df)
     print(all_cars_df.describe())
     # print(x)
     # print(y)
     clf = tree.DecisionTreeClassifier()
     reg = LinearRegression()
-    # reg.fit(x,y)
-    # clf = clf.fit(x,y)
-    # new_data = ['پژو 206','تیپ 2','1399']
-    # answer = reg.predict(new_data)
-    # print(f'i predict that price is {answer} toman')
+    reg.fit(x,y)
+    clf = clf.fit(x,y)
+    new_data = ['پژو 206','تیپ 5',1395,85000]
+    answer = reg.predict(new_data)
+    print(f'i predict that price is {answer} toman')
 
 
-format_html_result()
+# format_html_result()
 # save_to_database()
-# read_from_database()
+read_from_database()
