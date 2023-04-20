@@ -42,7 +42,10 @@ def format_html_result():
     if browser_hide:
         options.add_argument("--headless")
 
-    browser_driver = webdriver.Chrome(chrome_options=options)
+    from webdriver_manager.chrome import ChromeDriverManager
+    from selenium.webdriver.chrome.service import Service
+    browser_driver = webdriver.Chrome(service=Service(
+        ChromeDriverManager().install()), chrome_options=options)
     # browser_driver = webdriver.Chrome("C:/Users/zargham/.cache/selenium/chromedriver/win32/109.0.5414.74/chromedriver.exe")
 
     # browser_driver.get("https://divar.ir/s/tehran/car?non-negotiable=true")
@@ -256,6 +259,6 @@ def read_from_database():
     print(f'i predict that price is {answer} toman')
 
 
-# format_html_result()
+format_html_result()
 # save_to_database()
-read_from_database()
+# read_from_database()
